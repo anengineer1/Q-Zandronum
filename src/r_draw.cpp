@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 
+#include "basictypes.h"
 #include "templates.h"
 #include "doomdef.h"
 #include "i_system.h"
@@ -1687,17 +1688,29 @@ DWORD STACK_ARGS vlinec1 ()
 
 void STACK_ARGS vlinec4 ()
 {
-	BYTE *dest = dc_dest;
+	BYTE *__restrict__ dest = dc_dest;
 	int count = dc_count;
 	int bits = vlinebits;
 	DWORD place;
 
+	// restricted used to allow compilers to optimize
+	const BYTE *__restrict__ palookupffset_0 = palookupoffse[0];
+	const BYTE *__restrict__ palookupffset_1 = palookupoffse[1];
+	const BYTE *__restrict__ palookupffset_2 = palookupoffse[2];
+	const BYTE *__restrict__ palookupffset_3 = palookupoffse[3];
+	const BYTE *__restrict__ bufplce_0 = bufplce[0];
+	const BYTE *__restrict__ bufplce_1 = bufplce[1];
+	const BYTE *__restrict__ bufplce_2 = bufplce[2];
+	const BYTE *__restrict__ bufplce_3 = bufplce[3];
+
+
 	do
 	{
-		dest[0] = palookupoffse[0][bufplce[0][(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
-		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
-		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
-		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
+		dest[0] = palookupffset_0[bufplce_0[(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
+		dest[1] = palookupffset_1[bufplce_1[(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
+		dest[2] = palookupffset_2[bufplce_2[(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
+		dest[3] = palookupffset_3[bufplce_3[(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
+
 		dest += dc_pitch;
 	} while (--count);
 }
