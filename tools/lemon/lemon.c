@@ -53,7 +53,7 @@ extern int access(char *path, int mode);
 #endif
 
 static int showPrecedenceConflict = 0;
-static void *msort(void *list, void *next, int (*cmp)());
+static void *msort(void *list, void *next, int (*cmp)(const void *, const void *));
 
 /*
 ** Compilers are getting increasingly pedantic about type conversions
@@ -72,12 +72,12 @@ static struct action *Action_new(void);
 static struct action *Action_sort(struct action *);
 
 /********** From the file "build.h" ************************************/
-void FindRulePrecedences();
-void FindFirstSets();
-void FindStates();
-void FindLinks();
-void FindFollowSets();
-void FindActions();
+void FindRulePrecedences(struct lemon *xp);
+void FindFirstSets(struct lemon *lemp);
+void FindStates(struct lemon *lemp);
+void FindLinks(struct lemon *lemp);
+void FindFollowSets(struct lemon *lemp);
+void FindActions(struct lemon *lemp);
 
 /********* From the file "configlist.h" *********************************/
 void Configlist_init(void);
@@ -359,7 +359,7 @@ struct symbol **Symbol_arrayof(void);
 
 /* Routines to manage the state table */
 
-int Configcmp(const char *, const char *);
+int Configcmp(const void *, const void *);
 struct state *State_new(void);
 void State_init(void);
 int State_insert(struct state *, struct config *);
@@ -403,20 +403,20 @@ static struct action *Action_new(void){
 ** positive if the first action is less than, equal to, or greater than
 ** the first
 */
-static int actioncmp(ap1,ap2)
-struct action *ap1;
-struct action *ap2;
+static int actioncmp(const void *ap1, const void *ap2)
 {
+  struct action *a1 = (struct action *)ap1;
+  struct action *a2 = (struct action *)ap2;
   int rc;
-  rc = ap1->sp->index - ap2->sp->index;
+  rc = a1->sp->index - a2->sp->index;
   if( rc==0 ){
-    rc = (int)ap1->type - (int)ap2->type;
+    rc = (int)a1->type - (int)a2->type;
   }
-  if( rc==0 && (ap1->type==REDUCE || ap1->type==SHIFTREDUCE) ){
-    rc = ap1->x.rp->index - ap2->x.rp->index;
+  if( rc==0 && (a1->type==REDUCE || a1->type==SHIFTREDUCE) ){
+    rc = a1->x.rp->index - a2->x.rp->index;
   }
   if( rc==0 ){
-    rc = ap2 - ap1;
+    rc = a2 - a1;
   }
   return rc;
 }
@@ -1757,7 +1757,7 @@ int main(int argc, char **argv)
 **   The "next" pointers for elements in the lists a and b are
 **   changed.
 */
-static void *merge(void *a,void *b,int (*cmp)(),size_t offset)
+static void *merge(void *a,void *b,int (*cmp)(const void *a,const void *b),size_t offset)
 {
   char *ptr, *head;
 
@@ -1805,7 +1805,7 @@ static void *merge(void *a,void *b,int (*cmp)(),size_t offset)
 **   The "next" pointers for elements in list are changed.
 */
 #define LISTSIZE 30
-static void *msort(void *list,void *next,int (*cmp)())
+static void *msort(void *list,void *next,int (*cmp)(const void *, const void *))
 {
   size_t offset;
   char *ep;
@@ -2714,9 +2714,7 @@ static void preprocess_input(char *z){
   }
 }
 
-int strip_crlf(filebuf, filesize)
-char *filebuf;
-int filesize;
+int strip_crlf(char *filebuf, int filesize)
 {
 	int i, j;
 
@@ -5136,10 +5134,10 @@ struct symbol **Symbol_arrayof()
 }
 
 /* Compare two configurations */
-int Configcmp(const char *_a,const char *_b)
+int Configcmp(const void *_a, const void *_b)
 {
-  const struct config *a = (struct config *) _a;
-  const struct config *b = (struct config *) _b;
+  const struct config *a = (const struct config *) _a;
+  const struct config *b = (const struct config *) _b;
   int x;
   x = a->rp->index - b->rp->index;
   if( x==0 ) x = a->dot - b->dot;
